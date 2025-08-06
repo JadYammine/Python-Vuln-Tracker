@@ -1,0 +1,32 @@
+# ─────────────────────────────────────────────
+# Production image using Poetry (no virtualenv)
+# ─────────────────────────────────────────────
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    POETRY_VERSION=1.8.2 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_CACHE_DIR='/var/cache/pypoetry'
+
+WORKDIR /code
+
+
+# ---- install Poetry ---------------------------------------------------------
+RUN apt-get update && apt-get install -y curl \
+ && curl -sSL https://install.python-poetry.org | python3 - \
+ && ln -s /root/.local/bin/poetry /usr/local/bin/poetry \
+ && apt-get purge -y curl && apt-get autoremove -y \
+ && rm -rf /var/lib/apt/lists/*
+
+# ---- copy & lock install ----------------------------------------------------
+COPY pyproject.toml poetry.lock /code/
+
+RUN poetry install --no-interaction --no-ansi --no-root --no-dev --only main
+
+# ---- copy application code --------------------------------------------------
+COPY src ./src
+RUN chmod +x -R .
+
+EXPOSE 8000
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

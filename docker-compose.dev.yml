@@ -1,0 +1,13 @@
+services:
+  python-vuln-tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: python-vuln-tracker
+    ports:
+      - "8000:8000"
+      - "5678:5678" # Debugpy port
+    volumes:
+      - .:/code  # hot-reload in dev; remove in prod
+    environment:
+      - PYTHONUNBUFFERED=1
