@@ -11,3 +11,16 @@ services:
       - .:/code  # hot-reload in dev; remove in prod
     environment:
       - PYTHONUNBUFFERED=1
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: python-vuln-tracker-test
+    profiles: ["test"]
+    command: >
+      bash -c "pytest"
+    volumes:
+      - .:/code  # hot-reload in dev; remove in prod
+    environment:
+      - PYTHONUNBUFFERED=1
