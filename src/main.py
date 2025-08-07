@@ -1,3 +1,6 @@
+import uvloop
+uvloop.install()
+
 from fastapi import FastAPI
 
 from .utils.execution_time_middleware import ExecutionTimeMiddleware
