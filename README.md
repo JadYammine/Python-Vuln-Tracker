@@ -21,6 +21,15 @@ A FastAPI-based service to track vulnerabilities in Python project dependencies 
 
 ## Getting Started
 
+### Testing
+To run the test suite from your host (no need to bash into the container):
+
+```
+./run.test.sh
+```
+
+This will execute all tests and print a summary.
+
 ### Development
 1. Build and run the development container:
    ```
