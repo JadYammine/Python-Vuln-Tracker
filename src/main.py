@@ -1,8 +1,10 @@
 from fastapi import FastAPI
+
+from .utils.execution_time_middleware import ExecutionTimeMiddleware
 from .api import projects, dependencies
 
 app = FastAPI(title="Python Vulnerability Tracker")
-
+app.add_middleware(ExecutionTimeMiddleware)
 
 @app.get("/health")
 async def health():
