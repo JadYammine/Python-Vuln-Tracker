@@ -30,13 +30,27 @@ To run the test suite from your host (no need to bash into the container):
 
 This will execute all tests and print a summary.
 
-### Development
-1. Build and run the development container:
+### Development (Debug profile)
+1. Build and run the development container with debug tools:
    ```
    ./run.dev.sh
    ```
    - Hot-reload enabled
    - Debugpy available on port 5678
+
+### Performance (Perf profile)
+Run the application with an optimized configuration for benchmarking (no debugpy, no reload, reduced logging):
+```
+./run.perf.sh
+```
+Notes:
+- Uses `--profile perf` from `docker-compose.dev.yml`
+- Starts `python-vuln-tracker-perf` with:
+  - `PYTHONOPTIMIZE=1`
+  - uvloop + httptools
+  - `--no-access-log` and `--log-level warning`
+  - single worker by default (latency focus). Increase workers for throughput tests.
+  - No Debugpy (removes debug overhead for maximum performance and more accurate benchmarks)
 
 ### Production
 1. Build and run the production container:
