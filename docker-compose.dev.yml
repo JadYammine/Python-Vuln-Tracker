@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     container_name: python-vuln-tracker
+    profiles: ["debug"]
     ports:
       - "8000:8000"
       - "5678:5678" # Debugpy port
@@ -11,6 +12,25 @@ services:
       - .:/code  # hot-reload in dev; remove in prod
     environment:
       - PYTHONUNBUFFERED=1
+ 
+
+  # Optimized profile for performance measurements (no debugpy, no reload)
+  python-vuln-tracker-perf:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: python-vuln-tracker-perf
+    profiles: ["perf"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/code
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONOPTIMIZE=1
+    command: >
+      bash -c "uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 1
+               --loop uvloop --http httptools --no-access-log --log-level warning"
 
   test:
     build:
