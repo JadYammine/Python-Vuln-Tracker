@@ -1,5 +1,6 @@
 import httpx
 import asyncio
+import orjson
 from typing import List, Tuple
 from contextlib import asynccontextmanager
 
@@ -21,19 +22,21 @@ class OSVClient:
         self._setup_client()
 
     def _setup_client(self):
-        """Initialize HTTP client with connection pooling"""
+        """Initialize HTTP client with connection pooling and HTTP/2"""
         limits = httpx.Limits(
             max_connections=self.max_connections,
             max_keepalive_connections=10,
-            keepalive_expiry=30.0
+            keepalive_expiry=60.0  # Longer keepalive for HTTP/2
         )
         
         self.client = httpx.AsyncClient(
             timeout=self.timeout,
             limits=limits,
+            http2=True,  # Enable HTTP/2 for better multiplexing
             headers={
                 "User-Agent": "Python-Vuln-Tracker/1.0",
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip, br"  # Support brotli compression
             }
         )
 
@@ -80,9 +83,16 @@ class OSVClient:
                 }
                 
                 try:
-                    r = await self.client.post(OSV_BATCH_URL, json=payload)
+                    # Use orjson for faster JSON serialization
+                    json_payload = orjson.dumps(payload)
+                    r = await self.client.post(
+                        OSV_BATCH_URL, 
+                        content=json_payload,
+                        headers={"Content-Type": "application/json"}
+                    )
                     r.raise_for_status()
-                    batch_results = r.json()["results"]
+                    # Use orjson for faster JSON deserialization
+                    batch_results = orjson.loads(r.content)["results"]
                     
                     batch_dict = {
                         f"{n}=={v}": [vuln["id"] for vuln in res.get("vulns", [])]
@@ -115,7 +125,8 @@ class OSVClient:
             try:
                 res = await self.client.get(f"{OSV_VULN_URL}/{vuln_id}")
                 res.raise_for_status()
-                data = res.json()
+                # Use orjson for faster JSON deserialization
+                data = orjson.loads(res.content)
                 
                 return Vulnerability(
                     id=data["id"],

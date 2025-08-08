@@ -4,6 +4,7 @@ uvloop.install()
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import ORJSONResponse
 import time
 import logging
 from contextlib import asynccontextmanager
@@ -28,6 +29,7 @@ app = FastAPI(
     description="High-performance vulnerability tracking service",
     version="1.0.0",
     lifespan=lifespan,
+    default_response_class=ORJSONResponse,  # Use orjson for faster JSON responses
 )
 
 # Add performance monitoring middleware

@@ -1,5 +1,6 @@
 import pytest
 import httpx
+import orjson
 
 from src.services.osv_client import OSVClient
 from src.domain.dependency import Vulnerability
@@ -14,12 +15,13 @@ async def test_batch_query_success(monkeypatch):
             {"vulns": []}
         ]
     }
-    async def fake_post(url, json):
+    async def fake_post(url, content, headers):
         class Resp:
             def raise_for_status(self):
                 pass
-            def json(self):
-                return fake_response
+            @property
+            def content(self):
+                return orjson.dumps(fake_response)
         return Resp()
     client = OSVClient()
     monkeypatch.setattr(client.client, "post", fake_post)
@@ -46,8 +48,9 @@ async def test_vuln_detail_success(monkeypatch):
         class Resp:
             def raise_for_status(self):
                 pass
-            def json(self):
-                return fake_data
+            @property
+            def content(self):
+                return orjson.dumps(fake_data)
         return Resp()
     client = OSVClient()
     monkeypatch.setattr(client.client, "get", fake_get)
@@ -64,9 +67,10 @@ async def test_batch_query_http_error(monkeypatch):
     class FakeResp:
         def raise_for_status(self):
             raise httpx.HTTPStatusError("error", request=None, response=None)
-        def json(self):
-            return {}
-    async def fake_post(url, json):
+        @property
+        def content(self):
+            return b"{}"
+    async def fake_post(url, content, headers):
         return FakeResp()
     client = OSVClient()
     monkeypatch.setattr(client.client, "post", fake_post)
@@ -79,8 +83,9 @@ async def test_vuln_detail_http_error(monkeypatch):
     class FakeResp:
         def raise_for_status(self):
             raise httpx.HTTPStatusError("error", request=None, response=None)
-        def json(self):
-            return {}
+        @property
+        def content(self):
+            return b"{}"
     async def fake_get(url):
         return FakeResp()
     client = OSVClient()
@@ -92,19 +97,21 @@ async def test_vuln_detail_http_error(monkeypatch):
 async def test_counters_increment(monkeypatch):
     deps = [("requests", "2.25.1")]
     fake_response = {"results": [{"vulns": []}]}
-    async def fake_post(url, json):
+    async def fake_post(url, content, headers):
         class Resp:
             def raise_for_status(self):
                 pass
-            def json(self):
-                return fake_response
+            @property
+            def content(self):
+                return orjson.dumps(fake_response)
         return Resp()
     async def fake_get(url):
         class Resp:
             def raise_for_status(self):
                 pass
-            def json(self):
-                return {"id": "OSV-1", "references": []}
+            @property
+            def content(self):
+                return orjson.dumps({"id": "OSV-1", "references": []})
         return Resp()
     client = OSVClient()
     monkeypatch.setattr(client.client, "post", fake_post)

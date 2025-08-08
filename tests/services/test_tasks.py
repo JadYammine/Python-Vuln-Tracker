@@ -1,5 +1,6 @@
 import pytest
 import asyncio
+import orjson
 
 from src.domain.project import Project, ScanState
 from src.domain.dependency import Dependency, Vulnerability
@@ -136,20 +137,22 @@ async def test_scan_project_cache_hit(monkeypatch):
 
     class FakePostResp:
         def raise_for_status(self): pass
-        def json(self):
-            return {"results": [{"vulns": [{"id": "OSV-1"}]}]}
+        @property
+        def content(self):
+            return orjson.dumps({"results": [{"vulns": [{"id": "OSV-1"}]}]})
 
     class FakeGetResp:
         def raise_for_status(self): pass
-        def json(self):
-            return {
+        @property
+        def content(self):
+            return orjson.dumps({
                 "id": "OSV-1",
                 "summary": "Test vuln",
                 "severity": [{"score": "HIGH"}],
                 "references": [{"url": "url"}]
-            }
+            })
 
-    async def fake_post(self, url, json):
+    async def fake_post(self, url, content, headers):
         post_calls["count"] += 1
         return FakePostResp()
 
