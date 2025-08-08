@@ -7,4 +7,6 @@ def test_health_endpoint():
     with TestClient(app) as client:
         resp = client.get("/health")
         assert resp.status_code == 200
-        assert resp.json() == {"status": "ok"}
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert "timestamp" in data
